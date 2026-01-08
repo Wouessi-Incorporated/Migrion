@@ -62,12 +62,24 @@ app.use('/v1', requireAuth, async (req, res, next) => {
   next();
 });
 
+app.get('/v1/me', async (req, res) => {
+  res.json({ ok: true, user: req.user, candidate: req.candidate, employer: req.employer });
+});
+
 // Helpers for phase enforcement
 function phasePaid(c, phase) { return phase === 1 ? c.phase1Paid : phase === 2 ? c.phase2Paid : phase === 3 ? c.phase3Paid : false; }
 function requirePhasePaid(phase) {
   return (req, res, next) => {
     if (req.user.role !== 'candidate') return res.status(403).json({ error: 'FORBIDDEN' });
     if (!phasePaid(req.candidate, phase)) return res.status(403).json({ error: 'PHASE_NOT_PAID', phase });
+    next();
+  };
+}
+function requirePhaseSequence(phase) {
+  return (req, res, next) => {
+    if (req.user.role !== 'candidate') return res.status(403).json({ error: 'FORBIDDEN' });
+    if (phase > 1 && !req.candidate.phase1Done) return res.status(403).json({ error: 'PREVIOUS_PHASE_NOT_DONE', phase: 1 });
+    if (phase > 2 && !req.candidate.phase2Done) return res.status(403).json({ error: 'PREVIOUS_PHASE_NOT_DONE', phase: 2 });
     next();
   };
 }
@@ -107,15 +119,43 @@ app.post('/v1/candidate/pay-phase', async (req, res) => {
   res.json({ ok: true, paymentId: pay.id });
 });
 
-// Phase services (blocked unless paid)
+// Phase 1 Specialized Services (Payment Required)
+app.get('/v1/phase1/assessment', requirePhasePaid(1), async (req, res) => {
+  res.json({ ok: true, score: 88, details: 'Profession mapped to NOC 2173. Eligibility high for Canada/UK.' });
+});
+
+app.get('/v1/phase1/roadmap', requirePhasePaid(1), async (req, res) => {
+  res.json({ ok: true, roadmap: ['Document Verification', 'Employer Matchmaking', 'Escrow Setup'] });
+});
+
+// Phase services (blocked unless paid + sequential)
 app.post('/v1/phase1/complete', requirePhasePaid(1), async (req, res) => {
   await prisma.candidate.update({ where: { id: req.candidate.id }, data: { phase1Done: true, currentPhase: 2 } });
   await audit(req.user.id, 'phase1_completed', {});
   res.json({ ok: true });
 });
-app.post('/v1/phase2/complete', requirePhasePaid(2), requirePhaseDone(1), async (req, res) => {
+app.post('/v1/phase2/complete', requirePhasePaid(2), requirePhaseSequence(2), async (req, res) => {
+  // Check if at least one interview was validated
+  const validated = await prisma.interview.findFirst({ where: { candidateId: req.candidate.id, outcome: 'validated' } });
+  if (!validated) return res.status(403).json({ error: 'EMPLOYER_VALIDATION_REQUIRED' });
+
   await prisma.candidate.update({ where: { id: req.candidate.id }, data: { phase2Done: true, currentPhase: 3 } });
-  await audit(req.user.id, 'phase2_completed', {});
+
+  // Initialize Phase 3 Milestones
+  const milestones = [
+    { name: 'File Submission', requiredProof: 'Receipt', releaseCents: 250000 },
+    { name: 'Sponsorship Grant', requiredProof: 'Certificate', releaseCents: 350000 },
+    { name: 'Visa Approved', requiredProof: 'Copy of Visa', releaseCents: 400000 }
+  ];
+  for (const m of milestones) {
+    await prisma.escrowMilestone.upsert({
+      where: { id: req.candidate.id + '_' + m.name.replace(/\s/g, '_') }, // simplistic pseudo-unique id for demo
+      update: {},
+      create: { ...m, candidateId: req.candidate.id, id: req.candidate.id + '_' + m.name.replace(/\s/g, '_') }
+    });
+  }
+
+  await audit(req.user.id, 'phase2_completed', { validationId: validated.id });
   res.json({ ok: true });
 });
 

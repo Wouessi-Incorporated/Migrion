@@ -1,1 +1,19 @@
-export default function RootLayout({children}:{children:React.ReactNode}){return (<html><body style={{fontFamily:'Inter,system-ui,Segoe UI,Roboto,Arial',margin:0,background:'#FAF8F5'}}>{children}</body></html>)}
+import './globals.css';
+
+export default function RootLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <html lang="en">
+            <head>
+                <title>MIGRION™ | Move with certainty</title>
+                <meta name="description" content="Outcome-based migration infrastructure." />
+            </head>
+            <body>
+                {children}
+            </body>
+        </html>
+    );
+}
