@@ -15,16 +15,16 @@ services:
     ports: ["6379:6379"]
 
   api:
-    build: ../02_API
-    env_file: ["../02_API/.env"]
+    build: ../apps/api
+    env_file: ["../apps/api/.env"]
     depends_on: [postgres, redis]
     ports: ["4000:4000"]
     volumes:
-      - ../02_API/data:/app/data
+      - ../apps/api/data:/app/data
 
   web:
-    build: ../01_WEB
-    env_file: ["../01_WEB/.env"]
+    build: ../apps/web
+    env_file: ["../apps/web/.env"]
     depends_on: [api]
     ports: ["3000:3000"]
 

@@ -1,0 +1,21 @@
+{
+    "name": "migrion-monorepo",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+        "dev:api": "npm run start --workspace=migrion-api",
+        "dev:web": "npm run dev --workspace=migrion-web",
+        "build": "npm run build --workspaces",
+        "start": "npm run start --workspaces",
+        "lint": "echo 'No linting configured yet'",
+        "install:all": "npm install"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
