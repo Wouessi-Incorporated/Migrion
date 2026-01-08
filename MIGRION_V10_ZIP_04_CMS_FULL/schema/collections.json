@@ -1,0 +1,83 @@
+{
+  "collections": [
+    {
+      "collection": "countries",
+      "meta": {
+        "note": "Country landing pages"
+      },
+      "fields": [
+        {
+          "field": "slug",
+          "type": "string",
+          "required": true
+        },
+        {
+          "field": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "field": "summary",
+          "type": "text"
+        },
+        {
+          "field": "body",
+          "type": "text"
+        },
+        {
+          "field": "hero_video",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "collection": "videos",
+      "meta": {
+        "note": "Language auto-detect videos"
+      },
+      "fields": [
+        {
+          "field": "group",
+          "type": "string",
+          "required": true
+        },
+        {
+          "field": "lang",
+          "type": "string",
+          "required": true
+        },
+        {
+          "field": "url",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "collection": "phases",
+      "meta": {
+        "note": "Phase milestones + pricing"
+      },
+      "fields": [
+        {
+          "field": "phase",
+          "type": "string",
+          "required": true
+        },
+        {
+          "field": "title",
+          "type": "string",
+          "required": true
+        },
+        {
+          "field": "what_customer_gets",
+          "type": "text"
+        },
+        {
+          "field": "price",
+          "type": "integer"
+        }
+      ]
+    }
+  ]
+}

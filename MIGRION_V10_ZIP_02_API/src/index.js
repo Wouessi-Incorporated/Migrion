@@ -1,0 +1,1 @@
+import 'dotenv/config';import express from 'express';const app=express();app.use(express.json());app.get('/health',(r,s)=>s.json({ok:true}));app.get('/v1/employer/interview-products',(r,s)=>s.json({currency:'USD',items:[{sku:'INT_30',price:250},{sku:'INT_60',price:450},{sku:'MEMBER_1000',price:1000}]}));app.post('/v1/escrow/webhook',(r,s)=>s.json({ok:true}));app.listen(4000);
