@@ -7,6 +7,7 @@
         "packages/*"
     ],
     "scripts": {
+        "predev": "npx -y kill-port 3000 4000",
         "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
         "dev:api": "npm run start --workspace=migrion-api",
         "dev:web": "npm run dev --workspace=migrion-web",

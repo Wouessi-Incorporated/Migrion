@@ -42,6 +42,24 @@ export default function EmployerInterviewsPage() {
         return names[sku] || sku;
     };
 
+    const handlePurchase = async (sku: string) => {
+        alert(`Initiating secure payment for ${sku}...`);
+        try {
+            const res = await fetch('http://localhost:4000/v1/employer/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sku, employerId: 'DEMO-EMP-1' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`Success! Booking ID: ${data.booking.id}\nProceeding to Escrow Initialization.`);
+                // In a real app, router.push('/escrow');
+            }
+        } catch (e) {
+            alert('Booking failed');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-900 p-8">
             <div className="container mx-auto">
@@ -68,7 +86,12 @@ export default function EmployerInterviewsPage() {
                                 <div className="text-sm text-blue-400 font-mono mb-2">{product.sku}</div>
                                 <h3>{getDisplayName(product.sku)}</h3>
                                 <div className="price">${product.price}</div>
-                                <button className="select-button">Purchase Package</button>
+                                <button
+                                    onClick={() => handlePurchase(product.sku)}
+                                    className="select-button"
+                                >
+                                    Purchase Package
+                                </button>
                             </div>
                         ))}
                     </div>
