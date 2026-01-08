@@ -16,7 +16,7 @@ export default function CountriesPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('http://localhost:4000/v1/countries')
+        fetch('/v1/countries')
             .then(res => res.json())
             .then(data => setCountries(data.items))
             .catch(console.error)

@@ -17,7 +17,7 @@ export default function EmployerInterviewsPage() {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await fetch('http://localhost:4000/v1/employer/interview-products');
+                const res = await fetch('/v1/employer/interview-products');
                 if (!res.ok) throw new Error('Failed to fetch products');
                 const data = await res.json();
                 setProducts(data.items);
@@ -45,7 +45,7 @@ export default function EmployerInterviewsPage() {
     const handlePurchase = async (sku: string) => {
         alert(`Initiating secure payment for ${sku}...`);
         try {
-            const res = await fetch('http://localhost:4000/v1/employer/bookings', {
+            const res = await fetch('/v1/employer/bookings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sku, employerId: 'DEMO-EMP-1' })

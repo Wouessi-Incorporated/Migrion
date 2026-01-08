@@ -16,7 +16,7 @@ export default function EligibilityCheckPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:4000/v1/candidates/eligibility', {
+            const res = await fetch('/v1/candidates/eligibility', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
