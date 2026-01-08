@@ -1,0 +1,14 @@
+{
+  "name": "weekly_digest",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "webhook"
+    },
+    {
+      "id": "action",
+      "type": "httpRequest"
+    }
+  ],
+  "connections": {}
+}

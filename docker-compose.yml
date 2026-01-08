@@ -1,93 +1,64 @@
 version: "3.9"
-
 services:
-  # Database Service
   postgres:
     image: postgres:16-alpine
-    container_name: migrion-postgres
-    restart: always
     environment:
       POSTGRES_USER: migrion
       POSTGRES_PASSWORD: migrion_pw
       POSTGRES_DB: migrion
-    volumes:
-      - migrion_pg:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    networks:
-      - migrion-net
+    ports: ["5432:5432"]
+    volumes: ["migrion_pg:/var/lib/postgresql/data"]
 
-  # Cache Service
   redis:
     image: redis:7-alpine
-    container_name: migrion-redis
-    restart: always
-    ports:
-      - "6379:6379"
-    networks:
-      - migrion-net
+    ports: ["6379:6379"]
 
-  # Backend API
   api:
-    build: 
-      context: ./apps/api
-      dockerfile: Dockerfile
-    container_name: migrion-api
-    restart: always
-    environment:
-      - PORT=4000
-      - DATABASE_URL=postgresql://migrion:migrion_pw@postgres:5432/migrion
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      - postgres
-      - redis
-    ports:
-      - "4000:4000"
-    networks:
-      - migrion-net
+    build: ./apps/api
+    env_file: ["./apps/api/.env"]
+    depends_on: [postgres, redis]
+    ports: ["4000:4000"]
 
-  # Frontend Web App
   web:
-    build: 
-      context: ./apps/web
-      dockerfile: Dockerfile
-    container_name: migrion-web
-    restart: always
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:4000
-    depends_on:
-      - api
-    ports:
-      - "3000:3000"
-    networks:
-      - migrion-net
+    build: ./apps/web
+    env_file: ["./apps/web/.env"]
+    depends_on: [api]
+    ports: ["3000:3000"]
 
-  # CMS (Directus)
-  cms:
+  directus:
     image: directus/directus:10.12.1
-    container_name: migrion-cms
-    restart: always
+    ports: ["8055:8055"]
     environment:
-      KEY: "migrion-root-secret-key"
-      SECRET: "migrion-root-secret"
+      KEY: "replace-key"
+      SECRET: "replace-secret"
       ADMIN_EMAIL: "admin@migrion.local"
-      ADMIN_PASSWORD: "admin"
+      ADMIN_PASSWORD: "ChangeMeNow123!"
       DB_CLIENT: "pg"
       DB_HOST: "postgres"
       DB_PORT: "5432"
       DB_DATABASE: "migrion"
       DB_USER: "migrion"
       DB_PASSWORD: "migrion_pw"
-    depends_on:
-      - postgres
-    ports:
-      - "8055:8055"
-    networks:
-      - migrion-net
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "http://localhost:3000"
+    depends_on: [postgres]
+
+  n8n:
+    image: n8nio/n8n:1.57.0
+    environment:
+      N8N_HOST: "localhost"
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: "http"
+      WEBHOOK_URL: "http://localhost:5678/"
+      GENERIC_TIMEZONE: "Europe/Paris"
+    ports: ["5678:5678"]
+    volumes: ["migrion_n8n:/home/node/.n8n"]
+
+  adminer:
+    image: adminer:4
+    ports: ["8080:8080"]
+    depends_on: [postgres]
 
 volumes:
   migrion_pg:
-
-networks:
-  migrion-net:
-    driver: bridge
+  migrion_n8n:

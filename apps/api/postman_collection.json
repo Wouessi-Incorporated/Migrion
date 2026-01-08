@@ -1,0 +1,36 @@
+{
+  "info": {
+    "name": "MIGRION API v13",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:4000/health"
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "http://localhost:4000/v1/auth/login"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"candidate@migrion.local\", \"password\": \"ChangeMeNow123!\"}"
+        }
+      }
+    }
+  ]
+}

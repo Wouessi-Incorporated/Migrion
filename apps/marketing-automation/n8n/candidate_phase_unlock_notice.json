@@ -1,0 +1,14 @@
+{
+  "name": "candidate_phase_unlock_notice",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "webhook"
+    },
+    {
+      "id": "action",
+      "type": "httpRequest"
+    }
+  ],
+  "connections": {}
+}

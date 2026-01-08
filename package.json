@@ -1,7 +1,8 @@
 {
     "name": "migrion-monorepo",
-    "version": "1.0.0",
+    "version": "13.0.0",
     "private": true,
+    "type": "module",
     "workspaces": [
         "apps/*",
         "packages/*"
@@ -10,12 +11,17 @@
         "predev": "npx -y kill-port 3000 4000",
         "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
         "start:prod": "concurrently \"npm run start --workspace=migrion-api\" \"npm run start --workspace=migrion-web\"",
-        "dev:api": "npm run start --workspace=migrion-api",
+        "dev:api": "npm run dev --workspace=migrion-api",
         "dev:web": "npm run dev --workspace=migrion-web",
         "build": "npm run build --workspaces",
         "start": "npm run start --workspaces",
         "lint": "echo 'No linting configured yet'",
-        "install:all": "npm install"
+        "install:all": "npm install",
+        "docker:up": "docker compose up -d --build",
+        "docker:down": "docker compose down",
+        "docker:logs": "docker compose logs -f",
+        "prisma:migrate": "docker compose exec api npx prisma migrate dev --name init",
+        "prisma:seed": "docker compose exec api npm run seed"
     },
     "devDependencies": {
         "concurrently": "^8.2.2"

@@ -1,0 +1,14 @@
+{
+  "name": "employer_lead_capture",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "webhook"
+    },
+    {
+      "id": "action",
+      "type": "httpRequest"
+    }
+  ],
+  "connections": {}
+}

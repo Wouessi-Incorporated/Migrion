@@ -1,0 +1,64 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: migrion
+      POSTGRES_PASSWORD: migrion_pw
+      POSTGRES_DB: migrion
+    ports: ["5432:5432"]
+    volumes: ["migrion_pg:/var/lib/postgresql/data"]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  api:
+    build: ../01_API
+    env_file: ["../01_API/.env"]
+    depends_on: [postgres, redis]
+    ports: ["4000:4000"]
+
+  web:
+    build: ../02_WEB
+    env_file: ["../02_WEB/.env"]
+    depends_on: [api]
+    ports: ["3000:3000"]
+
+  directus:
+    image: directus/directus:10.12.1
+    ports: ["8055:8055"]
+    environment:
+      KEY: "replace-key"
+      SECRET: "replace-secret"
+      ADMIN_EMAIL: "admin@migrion.local"
+      ADMIN_PASSWORD: "ChangeMeNow123!"
+      DB_CLIENT: "pg"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_DATABASE: "migrion"
+      DB_USER: "migrion"
+      DB_PASSWORD: "migrion_pw"
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "http://localhost:3000"
+    depends_on: [postgres]
+
+  n8n:
+    image: n8nio/n8n:1.57.0
+    environment:
+      N8N_HOST: "localhost"
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: "http"
+      WEBHOOK_URL: "http://localhost:5678/"
+      GENERIC_TIMEZONE: "Europe/Paris"
+    ports: ["5678:5678"]
+    volumes: ["migrion_n8n:/home/node/.n8n"]
+
+  adminer:
+    image: adminer:4
+    ports: ["8080:8080"]
+    depends_on: [postgres]
+
+volumes:
+  migrion_pg:
+  migrion_n8n:

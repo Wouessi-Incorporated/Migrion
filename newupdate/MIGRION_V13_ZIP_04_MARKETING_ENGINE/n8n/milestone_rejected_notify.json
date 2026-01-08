@@ -1,0 +1,14 @@
+{
+  "name": "milestone_rejected_notify",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "webhook"
+    },
+    {
+      "id": "action",
+      "type": "httpRequest"
+    }
+  ],
+  "connections": {}
+}

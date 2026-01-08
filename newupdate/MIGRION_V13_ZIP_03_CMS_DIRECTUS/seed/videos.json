@@ -1,0 +1,92 @@
+[
+  {
+    "group": "country_switzerland",
+    "locale": "en",
+    "url": "https://example.com/video-en.mp4",
+    "title": "Switzerland \u2013 EN"
+  },
+  {
+    "group": "country_switzerland",
+    "locale": "fr",
+    "url": "https://example.com/video-fr.mp4",
+    "title": "Switzerland \u2013 FR"
+  },
+  {
+    "group": "country_switzerland",
+    "locale": "de",
+    "url": "https://example.com/video-de.mp4",
+    "title": "Switzerland \u2013 DE"
+  },
+  {
+    "group": "country_luxembourg",
+    "locale": "en",
+    "url": "https://example.com/video-en.mp4",
+    "title": "Luxembourg \u2013 EN"
+  },
+  {
+    "group": "country_luxembourg",
+    "locale": "fr",
+    "url": "https://example.com/video-fr.mp4",
+    "title": "Luxembourg \u2013 FR"
+  },
+  {
+    "group": "country_luxembourg",
+    "locale": "de",
+    "url": "https://example.com/video-de.mp4",
+    "title": "Luxembourg \u2013 DE"
+  },
+  {
+    "group": "country_canada",
+    "locale": "en",
+    "url": "https://example.com/video-en.mp4",
+    "title": "Canada \u2013 EN"
+  },
+  {
+    "group": "country_canada",
+    "locale": "fr",
+    "url": "https://example.com/video-fr.mp4",
+    "title": "Canada \u2013 FR"
+  },
+  {
+    "group": "country_canada",
+    "locale": "de",
+    "url": "https://example.com/video-de.mp4",
+    "title": "Canada \u2013 DE"
+  },
+  {
+    "group": "country_united-kingdom",
+    "locale": "en",
+    "url": "https://example.com/video-en.mp4",
+    "title": "United Kingdom \u2013 EN"
+  },
+  {
+    "group": "country_united-kingdom",
+    "locale": "fr",
+    "url": "https://example.com/video-fr.mp4",
+    "title": "United Kingdom \u2013 FR"
+  },
+  {
+    "group": "country_united-kingdom",
+    "locale": "de",
+    "url": "https://example.com/video-de.mp4",
+    "title": "United Kingdom \u2013 DE"
+  },
+  {
+    "group": "country_australia",
+    "locale": "en",
+    "url": "https://example.com/video-en.mp4",
+    "title": "Australia \u2013 EN"
+  },
+  {
+    "group": "country_australia",
+    "locale": "fr",
+    "url": "https://example.com/video-fr.mp4",
+    "title": "Australia \u2013 FR"
+  },
+  {
+    "group": "country_australia",
+    "locale": "de",
+    "url": "https://example.com/video-de.mp4",
+    "title": "Australia \u2013 DE"
+  }
+]

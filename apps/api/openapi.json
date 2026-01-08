@@ -1,0 +1,45 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MIGRION API",
+    "version": "13.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "token"
+          }
+        }
+      }
+    },
+    "/v1/candidate/pay-phase": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "paid"
+          }
+        }
+      }
+    },
+    "/v1/phase3/execute": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "execution allowed"
+          }
+        }
+      }
+    }
+  }
+}

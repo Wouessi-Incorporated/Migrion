@@ -1,0 +1,14 @@
+{
+  "nav": {
+    "home": "Start",
+    "countries": "L\u00e4nder",
+    "login": "Login",
+    "candidate": "Kandidat",
+    "employer": "Arbeitgeber"
+  },
+  "hero": {
+    "title": "MIGRION\u2122",
+    "tagline": "Move with certainty.",
+    "cta": "Starten"
+  }
+}

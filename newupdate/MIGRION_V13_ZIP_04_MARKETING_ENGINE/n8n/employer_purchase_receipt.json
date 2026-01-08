@@ -1,0 +1,14 @@
+{
+  "name": "employer_purchase_receipt",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "webhook"
+    },
+    {
+      "id": "action",
+      "type": "httpRequest"
+    }
+  ],
+  "connections": {}
+}

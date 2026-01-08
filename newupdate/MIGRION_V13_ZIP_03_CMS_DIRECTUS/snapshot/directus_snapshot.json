@@ -1,0 +1,14 @@
+{
+  "collections": [
+    {
+      "name": "countries"
+    },
+    {
+      "name": "videos"
+    },
+    {
+      "name": "pages"
+    }
+  ],
+  "notes": "Use Directus snapshot import/export tooling."
+}
