@@ -19,6 +19,7 @@ RUN npm run build --workspace=migrion-web
 # Expose ports for both services
 EXPOSE 3000 4000
 
-# Start both services using the existing 'dev' script which uses concurrently
-# In a strict production environment, you might use PM2, but this satisfies the single-container requirement.
-CMD ["npm", "run", "dev"]
+ENV NODE_ENV=production
+
+# Start both services using the production script
+CMD ["npm", "run", "start:prod"]

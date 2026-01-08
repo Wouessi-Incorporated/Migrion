@@ -9,6 +9,7 @@
     "scripts": {
         "predev": "npx -y kill-port 3000 4000",
         "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+        "start:prod": "concurrently \"npm run start --workspace=migrion-api\" \"npm run start --workspace=migrion-web\"",
         "dev:api": "npm run start --workspace=migrion-api",
         "dev:web": "npm run dev --workspace=migrion-web",
         "build": "npm run build --workspaces",
