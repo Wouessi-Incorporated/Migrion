@@ -39,19 +39,38 @@ export default function Header() {
             <>
               <Link href="/" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Home</Link>
               <Link href="/countries" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Destinations</Link>
+              <Link href="/login" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Login</Link>
             </>
           )}
-          <Link href="/login" style={{
-            background: '#1991DF',
-            color: '#001E3C',
-            padding: '8px 20px',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontWeight: 800
-          }}>
-            {isDashboard ? 'Logout' : 'Login'}
-          </Link>
+          {isDashboard ? (
+            <button
+              onClick={() => { localStorage.clear(); window.location.href = '/'; }}
+              style={{
+                background: '#ff4d4f',
+                color: '#fff',
+                padding: '8px 20px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 800
+              }}
+            >
+              Logout
+            </button>
+          ) : (
+            <Link href="/signup" style={{
+              background: '#1991DF',
+              color: '#001E3C',
+              padding: '8px 20px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: 800
+            }}>
+              Join Now
+            </Link>
+          )}
         </nav>
       </div>
     </header>

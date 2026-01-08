@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 
 export default function Login() {
-  const [email, setEmail] = useState('candidate@migrion.local');
-  const [password, setPassword] = useState('ChangeMeNow123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -78,13 +78,8 @@ export default function Login() {
               {loading ? 'Authenticating...' : 'Sign In'}
             </button>
 
-            <div style={{ marginTop: '20px', padding: '16px', background: '#F8F9FA', borderRadius: '12px', border: '1px solid #eee' }}>
-              <div style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', opacity: 0.5, marginBottom: '8px', letterSpacing: '0.5px' }}>Seed Accounts</div>
-              <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div onClick={() => { setEmail('candidate@migrion.local'); setPassword('ChangeMeNow123!'); }} style={{ cursor: 'pointer', color: 'var(--secondary)', textDecoration: 'underline' }}>Candidate Access</div>
-                <div onClick={() => { setEmail('employer@migrion.local'); setPassword('ChangeMeNow123!'); }} style={{ cursor: 'pointer', color: 'var(--secondary)', textDecoration: 'underline' }}>Employer Access</div>
-                <div onClick={() => { setEmail('admin@migrion.local'); setPassword('ChangeMeNow123!'); }} style={{ cursor: 'pointer', color: 'var(--secondary)', textDecoration: 'underline' }}>Admin Access</div>
-              </div>
+            <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', color: 'var(--text-muted)' }}>
+              Don't have an account? <a href="/signup" style={{ color: 'var(--secondary)', fontWeight: 600 }}>Create one</a>
             </div>
           </div>
         </div>

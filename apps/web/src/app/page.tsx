@@ -48,11 +48,11 @@ export default function Home() {
             The world's first outcome-based migration infrastructure. Secure your future with phase-locked execution and escrow protection.
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/login" className="btn-secondary" style={{ padding: '16px 40px', fontSize: '18px' }}>
-              Start Your Migration
+            <Link href="/signup" className="btn-secondary" style={{ padding: '16px 40px', fontSize: '18px' }}>
+              Join MIGRION™
             </Link>
             <Link href="/countries" className="btn-outline" style={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)', padding: '16px 40px', fontSize: '18px' }}>
-              Explore Countries
+              Explore Destinations
             </Link>
           </div>
         </div>

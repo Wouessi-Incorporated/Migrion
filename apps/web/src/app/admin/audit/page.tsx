@@ -1,36 +1,67 @@
 'use client';
 import Header from '@/components/Header';
-import {useEffect,useState} from 'react';
-import {api} from '@/lib/api';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
 
-export default function Audit(){
-  const [token,setToken]=useState('');
-  const [logs,setLogs]=useState<any[]>([]);
-  useEffect(()=>{
-    const t=localStorage.getItem('token')||'';
+export default function Audit() {
+  const [token, setToken] = useState('');
+  const [logs, setLogs] = useState<any[]>([]);
+  useEffect(() => {
+    const t = localStorage.getItem('token') || '';
     setToken(t);
-    (async()=>{
-      try{
-        const r=await api('/v1/admin/audit/export','GET',undefined,t);
-        setLogs(r.logs||[]);
-      }catch(e){}
+    (async () => {
+      try {
+        const r = await api('/v1/admin/audit/export', 'GET', undefined, t);
+        setLogs(r.logs || []);
+      } catch (e) { }
     })();
-  },[]);
+  }, []);
 
   return (
-    <div>
-      <Header/>
-      <div style={{maxWidth:1100,margin:'0 auto',padding:24}}>
-        <h1 style={{margin:'0 0 6px'}}>Audit log</h1>
-        <div style={{color:'#193044'}}>Append-only events (latest 1000).</div>
-        <div style={{marginTop:16,border:'1px solid #E3E3E4',borderRadius:16,background:'#fff'}}>
-          {logs.slice(0,50).map((l:any)=> (
-            <div key={l.id} style={{padding:12,borderTop:'1px solid #E3E3E4'}}>
-              <b>{l.event}</b>
-              <div style={{opacity:.8,fontSize:13}}>{new Date(l.createdAt).toLocaleString()}</div>
-              <pre style={{whiteSpace:'pre-wrap',fontSize:12,marginTop:8}}>{JSON.stringify(l.payload,null,2)}</pre>
-            </div>
-          ))}
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <Header />
+      <div style={{ maxWidth: 1200, margin: '40px auto', padding: '0 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+          <div>
+            <h1 style={{ fontSize: '32px', margin: 0 }}>System Infrastructure Audit</h1>
+            <p style={{ color: 'var(--text-muted)', marginTop: '4px' }}>Real-time event stream from the MIGRION™ middleware.</p>
+          </div>
+          <button className="btn-outline" onClick={() => window.print()}>Export PDF</button>
+        </div>
+
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
+                <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Event</th>
+                <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Timestamp</th>
+                <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Payload</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.length === 0 ? (
+                <tr>
+                  <td colSpan={3} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No audit events found. Log in as admin to see activity.</td>
+                </tr>
+              ) : (
+                logs.map((l: any) => (
+                  <tr key={l.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '16px 24px' }}>
+                      <span className="status-badge" style={{ background: '#E3F2FD', color: 'var(--primary)', fontWeight: 700 }}>{l.event}</span>
+                    </td>
+                    <td style={{ padding: '16px 24px', fontSize: '13px' }}>
+                      {new Date(l.createdAt).toLocaleString()}
+                    </td>
+                    <td style={{ padding: '16px 24px' }}>
+                      <pre style={{ margin: 0, fontSize: '11px', background: '#F1F5F9', padding: '8px', borderRadius: '8px', maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {l.payload}
+                      </pre>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

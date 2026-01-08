@@ -16,8 +16,10 @@ services:
   api:
     build: ./apps/api
     env_file: ["./apps/api/.env"]
-    depends_on: [postgres, redis]
+    depends_on: [redis]
     ports: ["4000:4000"]
+    volumes:
+      - ./apps/api/prisma:/app/apps/api/prisma
 
   web:
     build: ./apps/web

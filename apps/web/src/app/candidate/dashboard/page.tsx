@@ -23,16 +23,18 @@ export default function CandidateDash() {
 
   async function fetchData(t: string) {
     try {
-      // Mocked user data fetch - in real app would be its own endpoint
-      // For now we rely on the candidate data coming from the auth context or refetching
-      const [d, u] = await Promise.all([
+      const [d, me] = await Promise.all([
         api('/v1/public/destinations', 'GET', undefined, t),
-        api('/v1/public/destinations', 'GET', undefined, t) // placeholder
+        api('/v1/me', 'GET', undefined, t)
       ]);
       setDests(d.dest || []);
-      // Refresh candidate data by logging in again or having a /me endpoint
-      // We'll simulate current state by reading the dashboard status
-    } catch (e) { }
+      if (me.ok && me.candidate) {
+        setCandidate(me.candidate);
+        setTab(me.candidate.currentPhase || 1);
+      }
+    } catch (e) {
+      console.error('Failed to fetch dashboard data', e);
+    }
   }
 
   const showMsg = (text: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -50,7 +52,7 @@ export default function CandidateDash() {
         provider: 'stripe_mock'
       }, token);
       showMsg(`Payment for Phase ${phase} successful!`, 'success');
-      // Refresh logic would go here
+      await fetchData(token);
     } catch (e: any) {
       showMsg(e.data?.error || 'Payment failed', 'error');
     } finally {
@@ -63,7 +65,7 @@ export default function CandidateDash() {
     try {
       await api(`/v1/phase${phase}/complete`, 'POST', {}, token);
       showMsg(`Phase ${phase} verified and completed!`, 'success');
-      setTab(phase + 1);
+      await fetchData(token);
     } catch (e: any) {
       showMsg(e.data?.error || `Verification failed for Phase ${phase}`, 'error');
     } finally {
@@ -146,7 +148,9 @@ export default function CandidateDash() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h2 style={{ margin: 0 }}>Phase 1: Readiness & Positioning</h2>
-                <span className="status-badge status-pending">In Progress</span>
+                <span className={`status-badge ${candidate?.phase1Done ? 'status-done' : 'status-pending'}`}>
+                  {candidate?.phase1Done ? 'Completed' : 'In Progress'}
+                </span>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
@@ -177,8 +181,13 @@ export default function CandidateDash() {
                   <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Phase 1 covers initialization, AI processing, and readiness report.</p>
                   <div style={{ fontSize: '24px', fontWeight: 800, margin: '16px 0' }}>$499.00 <span style={{ fontSize: '14px', fontWeight: 400, opacity: 0.6 }}>USD</span></div>
                   <div style={{ display: 'flex', gap: '12px' }}>
-                    <button className="btn-secondary" onClick={() => pay(1, 49900)} disabled={loading} style={{ flex: 1 }}>Pay Now</button>
-                    <button className="btn-primary" onClick={() => completePhase(1)} disabled={loading} style={{ flex: 1 }}>Verify & Complete</button>
+                    {!candidate?.phase1Paid ? (
+                      <button className="btn-secondary" onClick={() => pay(1, 49900)} disabled={loading} style={{ flex: 1 }}>Pay Now</button>
+                    ) : (
+                      <button className="btn-primary" onClick={() => completePhase(1)} disabled={loading || candidate?.phase1Done} style={{ flex: 1 }}>
+                        {candidate?.phase1Done ? 'Verified' : 'Verify & Complete'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -189,18 +198,27 @@ export default function CandidateDash() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h2 style={{ margin: 0 }}>Phase 2: Employer Validation</h2>
-                <span className="status-badge status-blocked">Locked</span>
+                <span className={`status-badge ${candidate?.phase2Done ? 'status-done' : (candidate?.phase1Done ? 'status-pending' : 'status-blocked')}`}>
+                  {candidate?.phase2Done ? 'Completed' : (candidate?.phase1Done ? 'In Progress' : 'Locked')}
+                </span>
               </div>
               <p style={{ color: 'var(--text-muted)' }}>Access live video interviews with verified international employers who pay to see your talent.</p>
 
               <div style={{ border: '1px dashed var(--border)', padding: '40px', textAlign: 'center', borderRadius: '12px', marginTop: '24px' }}>
                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤝</div>
                 <h3 style={{ margin: 0 }}>Interview Marketplace</h3>
-                <p style={{ maxWidth: '400px', margin: '8px auto 24px' }}>You need to pay the Phase 2 fee to list your profile for employers and start scheduling interviews.</p>
+                <p style={{ maxWidth: '400px', margin: '8px auto 24px' }}>
+                  {!candidate?.phase1Done ? 'Complete Phase 1 to unlock the marketplace.' : 'Your profile is active in the global talent pool.'}
+                </p>
                 <div style={{ fontSize: '24px', fontWeight: 800, margin: '16px 0' }}>$999.00 <span style={{ fontSize: '14px', fontWeight: 400, opacity: 0.6 }}>USD</span></div>
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                  <button className="btn-secondary" onClick={() => pay(2, 99900)} disabled={loading}>Unlock Marketplace</button>
-                  <button className="btn-primary" onClick={() => completePhase(2)} disabled={loading}>Submit Validation</button>
+                  {!candidate?.phase2Paid ? (
+                    <button className="btn-secondary" onClick={() => pay(2, 99900)} disabled={loading || !candidate?.phase1Done}>Unlock Marketplace</button>
+                  ) : (
+                    <button className="btn-primary" onClick={() => completePhase(2)} disabled={loading || candidate?.phase2Done}>
+                      {candidate?.phase2Done ? 'Validation Secured' : 'Submit for Final Validation'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -210,7 +228,9 @@ export default function CandidateDash() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h2 style={{ margin: 0 }}>Phase 3: Escrow & Relocation</h2>
-                <span className="status-badge status-blocked">Locked</span>
+                <span className={`status-badge ${candidate?.escrowFunded ? 'status-done' : (candidate?.phase2Done ? 'status-pending' : 'status-blocked')}`}>
+                  {candidate?.escrowFunded ? 'Escrow Active' : (candidate?.phase2Done ? 'Awaiting Funds' : 'Locked')}
+                </span>
               </div>
 
               <div className="card" style={{ background: '#001E3C', color: 'white', border: 'none' }}>
@@ -231,8 +251,13 @@ export default function CandidateDash() {
                   </div>
                 </div>
                 <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
-                  <button className="btn-secondary" onClick={() => pay(3, 199900)} disabled={loading}>Confirm Escrow Slot</button>
-                  <button className="btn-outline" style={{ color: 'white' }} onClick={() => api('/v1/escrow/fund', 'POST', {}, token).then(() => showMsg('Escrow Funded', 'success'))}>Mock Fund</button>
+                  {!candidate?.phase3Paid ? (
+                    <button className="btn-secondary" onClick={() => pay(3, 199900)} disabled={loading || !candidate?.phase2Done}>Confirm Escrow Slot</button>
+                  ) : (
+                    <button className="btn-outline" style={{ color: 'white' }} onClick={() => api('/v1/escrow/fund', 'POST', {}, token).then(() => { showMsg('Escrow Funded', 'success'); fetchData(token); })} disabled={candidate?.escrowFunded}>
+                      {candidate?.escrowFunded ? 'Funded' : 'Fund Escrow (Mock)'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

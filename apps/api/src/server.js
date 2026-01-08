@@ -31,6 +31,37 @@ app.get('/health', (req, res) => res.json({ ok: true, service: 'migrion-api-v13'
 
 // AUTH
 const Login = z.object({ email: z.string().email(), password: z.string().min(6) });
+const Signup = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  role: z.enum(['candidate', 'employer']),
+  company: z.string().optional(),
+  destination: z.string().optional()
+});
+
+app.post('/v1/auth/signup', async (req, res) => {
+  const p = Signup.safeParse(req.body);
+  if (!p.success) return res.status(400).json({ error: 'INVALID', details: p.error.format() });
+
+  const exists = await prisma.user.findUnique({ where: { email: p.data.email } });
+  if (exists) return res.status(409).json({ error: 'USER_EXISTS' });
+
+  const hashedPassword = await bcrypt.hash(p.data.password, 10);
+  const user = await prisma.user.create({
+    data: {
+      email: p.data.email,
+      password: hashedPassword,
+      role: p.data.role,
+      candidate: p.data.role === 'candidate' ? { create: { destination: p.data.destination } } : undefined,
+      employer: p.data.role === 'employer' ? { create: { company: p.data.company || 'New Company' } } : undefined
+    }
+  });
+
+  const token = signToken(user);
+  await audit(user.id, 'auth_signup', { email: user.email, role: user.role });
+  res.json({ ok: true, token, role: user.role });
+});
+
 app.post('/v1/auth/login', async (req, res) => {
   const p = Login.safeParse(req.body); if (!p.success) return res.status(400).json({ error: 'INVALID' });
   const u = await prisma.user.findUnique({ where: { email: p.data.email } });
@@ -159,6 +190,20 @@ app.post('/v1/phase2/complete', requirePhasePaid(2), requirePhaseSequence(2), as
   res.json({ ok: true });
 });
 
+// Employer candidate marketplace access
+app.get('/v1/employer/candidates', async (req, res) => {
+  if (req.user.role !== 'employer') return res.status(403).json({ error: 'FORBIDDEN' });
+  const candidates = await prisma.candidate.findMany({
+    where: {
+      phase1Done: true,
+      phase2Paid: true,
+      phase2Done: false
+    },
+    include: { user: { select: { email: true } } }
+  });
+  res.json({ ok: true, candidates });
+});
+
 // Employer interview products + purchase
 app.get('/v1/employer/interview-products', async (req, res) => {
   res.json({
@@ -270,4 +315,4 @@ app.get('/v1/admin/audit/export', async (req, res) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-app.listen(port, () => console.log('migrion-api-v13 on', port));
+app.listen(port, '127.0.0.1', () => console.log('migrion-api-v13 on', port));
