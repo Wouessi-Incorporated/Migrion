@@ -1,0 +1,209 @@
+/* CSS Additions for Dynamic Content */
+
+.title {
+    font-size: 4rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(to right, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+}
+
+.subtitle {
+    font-size: 1.5rem;
+    color: #94a3b8;
+    max-width: 600px;
+    margin-bottom: 3rem;
+}
+
+.error-message {
+    margin-top: 1rem;
+    color: #ef4444;
+    font-weight: 500;
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    max-width: 1000px;
+    margin-top: 2rem;
+}
+
+.product-card {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: left;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    background: rgba(30, 41, 59, 0.9);
+    border-color: rgba(96, 165, 250, 0.3);
+}
+
+.product-card h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #f8fafc;
+    margin-bottom: 0.5rem;
+}
+
+.product-card .price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #60a5fa;
+    margin-bottom: 1.5rem;
+}
+
+.select-button {
+    width: 100%;
+    padding: 0.75rem;
+    background: transparent;
+    border: 1px solid #60a5fa;
+    color: #60a5fa;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.select-button:hover {
+    background: #60a5fa;
+    color: #0f172a;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Utilities */
+.bg-slate-900 {
+    background-color: #0f172a;
+}
+
+.p-8 {
+    padding: 2rem;
+}
+
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.mb-12 {
+    margin-bottom: 3rem;
+}
+
+.flex {
+    display: flex;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.text-blue-400 {
+    color: #60a5fa;
+}
+
+.hover\:text-blue-300:hover {
+    color: #93c5fd;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.block {
+    display: block;
+}
+
+.text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.text-white {
+    color: #ffffff;
+}
+
+.text-slate-400 {
+    color: #94a3b8;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.py-20 {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+}
+
+.bg-red-900\/20 {
+    background-color: rgba(127, 29, 29, 0.2);
+}
+
+.border {
+    border-width: 1px;
+}
+
+.border-red-500\/50 {
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+.text-red-200 {
+    color: #fecaca;
+}
+
+.rounded-lg {
+    border-radius: 0.5rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.gap-4 {
+    gap: 1rem;
+}
