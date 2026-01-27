@@ -12,7 +12,7 @@ $ScriptRoot = $PSScriptRoot
 try {
     Set-Location -Path $ScriptRoot
     
-    # Step 1: Configure API for SQLite
+    # Step 1: Configure API for local development
     Write-Host "📝 Step 1: Configuring API for local development..." -ForegroundColor Yellow
     
     $apiEnvContent = @"
