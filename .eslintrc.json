@@ -1,8 +1,8 @@
 {
-    "root": true,
     "extends": [
         "eslint:recommended"
     ],
+    "root": true,
     "env": {
         "es2022": true,
         "node": true
@@ -28,5 +28,13 @@
                 ]
             }
         ]
-    }
+    },
+    "overrides": [
+        {
+            "files": ["*.ts", "*.tsx"],
+            "extends": [
+                "eslint:recommended"
+            ]
+        }
+    ]
 }
