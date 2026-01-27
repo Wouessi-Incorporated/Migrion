@@ -10,7 +10,7 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 # Force re-install dependencies for clean build
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # 2. Copy source code
 COPY . .
