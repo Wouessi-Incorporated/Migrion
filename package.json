@@ -15,7 +15,8 @@
         "dev:web": "npm run dev --workspace=migrion-web",
         "build": "npm run build --workspaces",
         "start": "npm run start --workspaces",
-        "lint": "echo 'No linting configured yet'",
+        "lint": "npm run lint --workspaces",
+        "test": "echo 'No tests configured yet'",
         "install:all": "npm install",
         "docker:up": "docker compose up -d --build",
         "docker:down": "docker compose down",
@@ -24,6 +25,7 @@
         "prisma:seed": "docker compose exec api npm run seed"
     },
     "devDependencies": {
-        "concurrently": "^8.2.2"
+        "concurrently": "^8.2.2",
+        "eslint": "^9.39.2"
     }
 }

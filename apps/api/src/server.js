@@ -7,15 +7,45 @@ import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+import { config } from './config.js';
 
 const prisma = new PrismaClient();
 const app = express();
+
+// Security & Performance Middleware
 app.use(helmet());
-app.use(cors({ origin: true, credentials: true }));
+app.use(compression());
+
+// CORS Configuration
+const allowedOrigins = config.ALLOWED_ORIGINS.split(',').map(o => o.trim());
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || config.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
+
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change_me';
+const JWT_SECRET = config.JWT_SECRET;
 function signToken(user) { return jwt.sign({ sub: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: '7d' }); }
 function requireAuth(req, res, next) {
   const h = req.headers.authorization || '';
@@ -266,7 +296,7 @@ app.post('/v1/escrow/fund', requirePhasePaid(3), requirePhaseDone(2), async (req
 });
 
 app.post('/v1/escrow/webhook', async (req, res) => {
-  const secret = process.env.ESCROW_WEBHOOK_SECRET || '';
+  const secret = config.ESCROW_WEBHOOK_SECRET || '';
   if (secret && req.headers['x-escrow-secret'] !== secret) return res.status(401).json({ error: 'UNAUTHORIZED' });
   const schema = z.object({ candidateId: z.string().uuid(), milestoneName: z.string().min(2), status: z.enum(['approved', 'rejected']), reference: z.string().optional() });
   const p = schema.safeParse(req.body); if (!p.success) return res.status(400).json({ error: 'INVALID' });
@@ -314,5 +344,5 @@ app.get('/v1/admin/audit/export', async (req, res) => {
   res.json({ ok: true, logs });
 });
 
-const port = Number(process.env.PORT || 4000);
-app.listen(port, '127.0.0.1', () => console.log('migrion-api-v13 on', port));
+const port = config.PORT;
+app.listen(port, '0.0.0.0', () => console.log(`migrion-api-v13 running on port ${port} in ${config.NODE_ENV} mode`));
