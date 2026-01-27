@@ -4,16 +4,17 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 
 export default function Audit() {
-  const [token, setToken] = useState('');
   const [logs, setLogs] = useState<any[]>([]);
   useEffect(() => {
     const t = localStorage.getItem('token') || '';
-    setToken(t);
+    // setToken(t);
     (async () => {
       try {
         const r = await api('/v1/admin/audit/export', 'GET', undefined, t);
         setLogs(r.logs || []);
-      } catch (e) { }
+      } catch (e) {
+        // ignore
+      }
     })();
   }, []);
 

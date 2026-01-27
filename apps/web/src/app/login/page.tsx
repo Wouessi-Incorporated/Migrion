@@ -79,7 +79,7 @@ export default function Login() {
             </button>
 
             <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', color: 'var(--text-muted)' }}>
-              Don't have an account? <a href="/signup" style={{ color: 'var(--secondary)', fontWeight: 600 }}>Create one</a>
+              Don&apos;t have an account? <a href="/signup" style={{ color: 'var(--secondary)', fontWeight: 600 }}>Create one</a>
             </div>
           </div>
         </div>
