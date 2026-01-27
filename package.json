@@ -25,7 +25,7 @@
         "prisma:seed": "docker compose exec api npm run seed"
     },
     "devDependencies": {
-        "concurrently": "^8.2.2",
+        "concurrently": "^9.2.1",
         "eslint": "^9.39.2"
     }
 }
