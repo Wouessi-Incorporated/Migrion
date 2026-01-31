@@ -1,5 +1,6 @@
 version: "3.9"
 services:
+  # Database Services (Background)
   postgres:
     image: postgres:16-alpine
     environment:
@@ -8,39 +9,97 @@ services:
       POSTGRES_DB: migrion
     ports: ["5432:5432"]
     volumes: ["migrion_pg:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U migrion"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
+  # API Service (Background)
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    env_file: ["./apps/api/.env"]
-    depends_on: [redis]
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://migrion:migrion_pw@postgres:5432/migrion
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-jwt-secret-change-this
+      - CORS_ORIGIN=http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports: ["4000:4000"]
     volumes:
       - ./apps/api/prisma:/app/apps/api/prisma
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4000/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
 
+  # Web Service (Frontend - Primary Service)
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: http://localhost:4000
-    env_file: ["./apps/web/.env"]
     environment:
       - INTERNAL_API_URL=http://api:4000
-    depends_on: [api]
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+      - NODE_ENV=production
+      - PORT=3000
     ports: ["3000:3000"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    # Note: No depends_on for frontend-first approach
+    # Frontend will handle API connection gracefully
 
+  # Background Services
   directus:
     image: directus/directus:10.12.1
     ports: ["8055:8055"]
     environment:
-      KEY: "replace-key"
-      SECRET: "replace-secret"
+      KEY: "migrion-directus-key-change-this"
+      SECRET: "migrion-directus-secret-change-this"
       ADMIN_EMAIL: "admin@migrion.local"
       ADMIN_PASSWORD: "ChangeMeNow123!"
       DB_CLIENT: "pg"
@@ -50,8 +109,14 @@ services:
       DB_USER: "migrion"
       DB_PASSWORD: "migrion_pw"
       CORS_ENABLED: "true"
-      CORS_ORIGIN: "http://localhost:3000"
-    depends_on: [postgres]
+      CORS_ORIGIN: "http://localhost:3000,http://localhost:8055"
+      LOG_LEVEL: "info"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - migrion_directus_uploads:/directus/uploads
 
   n8n:
     image: n8nio/n8n:1.57.0
@@ -60,15 +125,29 @@ services:
       N8N_PORT: "5678"
       N8N_PROTOCOL: "http"
       WEBHOOK_URL: "http://localhost:5678/"
-      GENERIC_TIMEZONE: "Europe/Paris"
+      GENERIC_TIMEZONE: "UTC"
+      N8N_SECURE_COOKIE: "false"
+      N8N_LOG_LEVEL: "info"
     ports: ["5678:5678"]
     volumes: ["migrion_n8n:/home/node/.n8n"]
+    restart: unless-stopped
 
   adminer:
     image: adminer:4
     ports: ["8080:8080"]
-    depends_on: [postgres]
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: "pepa-linha"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   migrion_pg:
   migrion_n8n:
+  migrion_directus_uploads:
+
+networks:
+  default:
+    name: migrion_network
