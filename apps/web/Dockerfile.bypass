@@ -1,7 +1,7 @@
-# MIGRION™ - Production Bypass Dockerfile
-# This version completely bypasses Next.js build issues and provides a working frontend
+# Bypass Dockerfile for Migrion Web - No Build Required
+# This completely bypasses Next.js build and serves a functional frontend
 
-FROM node:20-alpine AS base
+FROM node:20-alpine
 
 # Install system dependencies
 RUN apk add --no-cache libc6-compat wget curl dumb-init
@@ -13,24 +13,23 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001
 
-# Create the production server that bypasses all build issues
+# Create the bypass server directly
 RUN cat > server.js << 'EOF'
 const http = require('http');
 const url = require('url');
+const querystring = require('querystring');
 
 const port = process.env.PORT || 3000;
-const apiPort = process.env.PORT_API || 4000;
-const INTERNAL_API_URL = process.env.INTERNAL_API_URL || `http://localhost:${apiPort}`;
+const API_URL = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-console.log(`🚀 Starting MIGRION Production Server`);
-console.log(`📍 Frontend: http://localhost:${port}`);
-console.log(`🔧 API: ${INTERNAL_API_URL}`);
+console.log(`Starting Migrion Frontend Server on port ${port}`);
+console.log(`API URL: ${API_URL}`);
 
-// Simple API proxy
+// Simple HTTP proxy for API calls
 async function proxyToAPI(path, method, headers, body) {
+    const fetch = await import('node-fetch').then(m => m.default);
     try {
-        const fetch = await import('node-fetch').then(m => m.default);
-        const apiResponse = await fetch(`${INTERNAL_API_URL}/v1${path}`, {
+        const apiResponse = await fetch(`${API_URL}/v1${path}`, {
             method,
             headers: {
                 ...headers,
@@ -62,21 +61,22 @@ const server = http.createServer(async (req, res) => {
 
     console.log(`${new Date().toISOString()} - ${method} ${req.url}`);
 
-    // CORS headers
+    // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
+    // Handle preflight requests
     if (method === 'OPTIONS') {
         res.writeHead(200);
         res.end();
         return;
     }
 
-    // Health check
+    // Health check endpoint
     if (req.url === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok', service: 'migrion-production' }));
+        res.end(JSON.stringify({ status: 'ok', service: 'migrion-web-bypass' }));
         return;
     }
 
@@ -87,13 +87,14 @@ const server = http.createServer(async (req, res) => {
         req.on('end', async () => {
             const apiPath = req.url.replace('/api', '');
             const result = await proxyToAPI(apiPath, method, req.headers, body);
+
             res.writeHead(result.status, result.headers);
             res.end(result.body);
         });
         return;
     }
 
-    // Main application
+    // Serve the main application
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(`<!DOCTYPE html>
 <html lang="en">
@@ -111,15 +112,23 @@ const server = http.createServer(async (req, res) => {
             --border: #e2e8f0;
             --card-bg: #ffffff;
             --success: #059669;
+            --warning: #d97706;
             --error: #dc2626;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
         }
+
         .header {
             padding: 16px 24px;
             background: rgba(0, 30, 60, 0.95);
@@ -130,6 +139,7 @@ const server = http.createServer(async (req, res) => {
             z-index: 1000;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
+
         .header-content {
             max-width: 1200px;
             margin: 0 auto;
@@ -137,6 +147,7 @@ const server = http.createServer(async (req, res) => {
             align-items: center;
             justify-content: space-between;
         }
+
         .logo {
             font-size: 20px;
             font-weight: 900;
@@ -144,12 +155,15 @@ const server = http.createServer(async (req, res) => {
             color: #fff;
             text-decoration: none;
         }
+
         .logo .brand { color: var(--secondary); }
+
         .nav {
             display: flex;
             gap: 24px;
             align-items: center;
         }
+
         .nav a {
             color: #fff;
             text-decoration: none;
@@ -157,7 +171,9 @@ const server = http.createServer(async (req, res) => {
             font-weight: 500;
             transition: color 0.2s;
         }
+
         .nav a:hover { color: var(--secondary); }
+
         .btn {
             padding: 8px 20px;
             border-radius: 8px;
@@ -168,29 +184,35 @@ const server = http.createServer(async (req, res) => {
             cursor: pointer;
             transition: all 0.2s;
         }
+
         .btn-primary {
             background: var(--secondary);
             color: var(--primary);
         }
+
         .btn-primary:hover {
             background: #1976d2;
             transform: translateY(-1px);
         }
+
         .container {
             max-width: 1100px;
             margin: 0 auto;
             padding: 24px;
         }
+
         .hero {
             padding: 80px 0;
             text-align: center;
         }
+
         .hero h1 {
             font-size: 3.5rem;
             margin: 0 0 20px 0;
             color: var(--primary);
             font-weight: 900;
         }
+
         .hero p {
             font-size: 1.2rem;
             color: var(--text-muted);
@@ -198,66 +220,79 @@ const server = http.createServer(async (req, res) => {
             max-width: 780px;
             margin: 0 auto 40px;
         }
+
         .buttons {
             display: flex;
             gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
         }
+
         .btn-large {
             padding: 14px 28px;
             font-size: 16px;
             border-radius: 12px;
         }
+
         .btn-outline {
             background: transparent;
             color: var(--text);
             border: 1px solid var(--border);
         }
+
         .btn-outline:hover {
             border-color: var(--secondary);
             color: var(--secondary);
         }
+
         .card {
             background: var(--card-bg);
             border-radius: 16px;
             padding: 32px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             border: 1px solid var(--border);
-            margin: 20px auto;
-            max-width: 420px;
         }
+
         .input {
             width: 100%;
             padding: 12px 16px;
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 14px;
-            margin-bottom: 16px;
             transition: border-color 0.2s;
         }
+
         .input:focus {
             outline: none;
             border-color: var(--secondary);
         }
+
         .status {
             margin-top: 2rem;
             padding: 1rem;
             background: rgba(25, 145, 223, 0.1);
             border-radius: 8px;
             border-left: 4px solid var(--secondary);
+            text-align: left;
         }
+
         .error {
             background: rgba(220, 38, 38, 0.1);
             border-left-color: var(--error);
             color: var(--error);
         }
+
         .success {
             background: rgba(5, 150, 105, 0.1);
             border-left-color: var(--success);
             color: var(--success);
         }
-        .hidden { display: none; }
+
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
         @media (max-width: 768px) {
             .hero h1 { font-size: 2.5rem; }
             .container { padding: 16px; }
@@ -268,9 +303,9 @@ const server = http.createServer(async (req, res) => {
 <body>
     <header class="header">
         <div class="header-content">
-            <a href="#" onclick="showPage('home')" class="logo">MIGRION<span class="brand">™</span></a>
+            <a href="/" class="logo">MIGRION<span class="brand">™</span></a>
             <nav class="nav" id="nav">
-                <a href="#" onclick="showPage('home')">Home</a>
+                <a href="/">Home</a>
                 <a href="#" onclick="showPage('countries')">Destinations</a>
                 <a href="#" onclick="showPage('login')">Login</a>
                 <a href="#" onclick="showPage('signup')" class="btn btn-primary">Join Now</a>
@@ -291,9 +326,10 @@ const server = http.createServer(async (req, res) => {
                     <a href="#" onclick="showPage('countries')" class="btn btn-outline btn-large">Explore destinations</a>
                 </div>
             </div>
+
             <div class="status">
-                <strong>System Status:</strong> Production service running<br>
-                <small>API: ${INTERNAL_API_URL} | Version: 13.0.0</small>
+                <strong>System Status:</strong> Frontend service is running successfully<br>
+                <small>API: ${API_URL} | Mode: Production Bypass</small>
             </div>
         </div>
     </div>
@@ -303,6 +339,7 @@ const server = http.createServer(async (req, res) => {
         let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
         let authToken = localStorage.getItem('token');
 
+        // Simple API client
         async function api(path, method = 'GET', body = null) {
             const headers = { 'Content-Type': 'application/json' };
             if (authToken) headers['Authorization'] = \`Bearer \${authToken}\`;
@@ -323,94 +360,32 @@ const server = http.createServer(async (req, res) => {
             }
         }
 
+        // Simple routing
         function showPage(page) {
             const app = document.getElementById('app');
 
             switch(page) {
                 case 'login':
-                    app.innerHTML = \`
-                        <div class="container">
-                            <div class="card">
-                                <h2 style="text-align: center; margin-bottom: 32px;">Welcome back</h2>
-                                <form onsubmit="handleLogin(event)">
-                                    <input type="email" name="email" class="input" placeholder="Email" required>
-                                    <input type="password" name="password" class="input" placeholder="Password" required>
-                                    <div id="login-error"></div>
-                                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px;">Sign In</button>
-                                </form>
-                                <p style="text-align: center; margin-top: 20px;">
-                                    Don't have an account? <a href="#" onclick="showPage('signup')" style="color: var(--secondary);">Create one</a>
-                                </p>
-                            </div>
-                        </div>\`;
+                    app.innerHTML = getLoginPage();
                     break;
                 case 'signup':
-                    app.innerHTML = \`
-                        <div class="container">
-                            <div class="card">
-                                <h2 style="text-align: center; margin-bottom: 32px;">Join MIGRION</h2>
-                                <form onsubmit="handleSignup(event)">
-                                    <input type="email" name="email" class="input" placeholder="Email" required>
-                                    <input type="password" name="password" class="input" placeholder="Password" required>
-                                    <select name="role" class="input" required>
-                                        <option value="">Select Role</option>
-                                        <option value="candidate">Candidate</option>
-                                        <option value="employer">Employer</option>
-                                    </select>
-                                    <div id="signup-error"></div>
-                                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px;">Create Account</button>
-                                </form>
-                                <p style="text-align: center; margin-top: 20px;">
-                                    Already have an account? <a href="#" onclick="showPage('login')" style="color: var(--secondary);">Sign in</a>
-                                </p>
-                            </div>
-                        </div>\`;
+                    app.innerHTML = getSignupPage();
                     break;
                 case 'countries':
-                    app.innerHTML = \`
-                        <div class="container">
-                            <h2>Destination Countries</h2>
-                            <p>Explore migration opportunities across different countries.</p>
-                            <div class="status">Loading countries from API...</div>
-                        </div>\`;
+                    app.innerHTML = getCountriesPage();
                     break;
                 case 'dashboard':
                     if (!currentUser) {
                         showPage('login');
                         return;
                     }
-                    app.innerHTML = \`
-                        <div class="container">
-                            <h2>\${currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)} Dashboard</h2>
-                            <div class="card">
-                                <p>Welcome, \${currentUser.email}!</p>
-                                <p>Role: \${currentUser.role}</p>
-                                <div class="status success">
-                                    <strong>Status:</strong> Logged in successfully
-                                </div>
-                            </div>
-                        </div>\`;
+                    app.innerHTML = getDashboardPage();
                     break;
                 default:
-                    app.innerHTML = \`
-                        <div class="container">
-                            <div class="hero">
-                                <h1>Move with certainty.</h1>
-                                <p>
-                                    MIGRION is a phase-locked immigration platform. Every service is blocked unless the phase is paid.
-                                    Phase 2 is employer-paid live video interviews. Phase 3 uses independent escrow with milestones.
-                                </p>
-                                <div class="buttons">
-                                    <a href="#" onclick="showPage('login')" class="btn btn-primary btn-large">Login</a>
-                                    <a href="#" onclick="showPage('countries')" class="btn btn-outline btn-large">Explore destinations</a>
-                                </div>
-                            </div>
-                            <div class="status">
-                                <strong>System Status:</strong> Production service running<br>
-                                <small>API: ${INTERNAL_API_URL} | Version: 13.0.0</small>
-                            </div>
-                        </div>\`;
+                    app.innerHTML = getHomePage();
             }
+
+            // Update navigation
             updateNav();
         }
 
@@ -424,7 +399,7 @@ const server = http.createServer(async (req, res) => {
                 \`;
             } else {
                 nav.innerHTML = \`
-                    <a href="#" onclick="showPage('home')">Home</a>
+                    <a href="/">Home</a>
                     <a href="#" onclick="showPage('countries')">Destinations</a>
                     <a href="#" onclick="showPage('login')">Login</a>
                     <a href="#" onclick="showPage('signup')" class="btn btn-primary">Join Now</a>
@@ -432,19 +407,131 @@ const server = http.createServer(async (req, res) => {
             }
         }
 
+        function getHomePage() {
+            return \`
+                <div class="container">
+                    <div class="hero">
+                        <h1>Move with certainty.</h1>
+                        <p>
+                            MIGRION is a phase-locked immigration platform. Every service is blocked unless the phase is paid.
+                            Phase 2 is employer-paid live video interviews. Phase 3 uses independent escrow with milestones.
+                        </p>
+                        <div class="buttons">
+                            <a href="#" onclick="showPage('login')" class="btn btn-primary btn-large">Login</a>
+                            <a href="#" onclick="showPage('countries')" class="btn btn-outline btn-large">Explore destinations</a>
+                        </div>
+                    </div>
+
+                    <div class="status">
+                        <strong>System Status:</strong> Frontend service is running successfully<br>
+                        <small>API: ${API_URL} | Mode: Production Bypass</small>
+                    </div>
+                </div>
+            \`;
+        }
+
+        function getLoginPage() {
+            return \`
+                <div class="container">
+                    <div style="max-width: 420px; margin: 80px auto;">
+                        <div class="card">
+                            <h2 style="text-align: center; margin-bottom: 32px;">Welcome back</h2>
+                            <form onsubmit="handleLogin(event)">
+                                <div style="margin-bottom: 20px;">
+                                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Email</label>
+                                    <input type="email" name="email" class="input" required>
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Password</label>
+                                    <input type="password" name="password" class="input" required>
+                                </div>
+                                <div id="login-error"></div>
+                                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px;">Sign In</button>
+                            </form>
+                            <p style="text-align: center; margin-top: 20px;">
+                                Don't have an account? <a href="#" onclick="showPage('signup')" style="color: var(--secondary);">Create one</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            \`;
+        }
+
+        function getSignupPage() {
+            return \`
+                <div class="container">
+                    <div style="max-width: 420px; margin: 80px auto;">
+                        <div class="card">
+                            <h2 style="text-align: center; margin-bottom: 32px;">Join MIGRION</h2>
+                            <form onsubmit="handleSignup(event)">
+                                <div style="margin-bottom: 20px;">
+                                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Email</label>
+                                    <input type="email" name="email" class="input" required>
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Password</label>
+                                    <input type="password" name="password" class="input" required>
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <label style="display: block; margin-bottom: 6px; font-weight: 600;">Role</label>
+                                    <select name="role" class="input" required>
+                                        <option value="candidate">Candidate</option>
+                                        <option value="employer">Employer</option>
+                                    </select>
+                                </div>
+                                <div id="signup-error"></div>
+                                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px;">Create Account</button>
+                            </form>
+                            <p style="text-align: center; margin-top: 20px;">
+                                Already have an account? <a href="#" onclick="showPage('login')" style="color: var(--secondary);">Sign in</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            \`;
+        }
+
+        function getCountriesPage() {
+            return \`
+                <div class="container">
+                    <h2>Destination Countries</h2>
+                    <p>Explore migration opportunities across different countries.</p>
+                    <div id="countries-list">Loading countries...</div>
+                </div>
+            \`;
+        }
+
+        function getDashboardPage() {
+            const role = currentUser?.role || 'candidate';
+            return \`
+                <div class="container">
+                    <h2>\${role.charAt(0).toUpperCase() + role.slice(1)} Dashboard</h2>
+                    <div class="card">
+                        <p>Welcome to your dashboard, \${currentUser.email}!</p>
+                        <p>Role: \${role}</p>
+                        <div class="status success">
+                            <strong>Status:</strong> Logged in successfully
+                        </div>
+                    </div>
+                </div>
+            \`;
+        }
+
         async function handleLogin(event) {
             event.preventDefault();
             const form = event.target;
             const formData = new FormData(form);
+            const email = formData.get('email');
+            const password = formData.get('password');
 
             try {
-                const response = await api('/auth/login', 'POST', {
-                    email: formData.get('email'),
-                    password: formData.get('password')
-                });
+                form.classList.add('loading');
+                document.getElementById('login-error').innerHTML = '';
+
+                const response = await api('/auth/login', 'POST', { email, password });
 
                 authToken = response.token;
-                currentUser = { email: formData.get('email'), role: response.role };
+                currentUser = { email, role: response.role };
 
                 localStorage.setItem('token', authToken);
                 localStorage.setItem('user', JSON.stringify(currentUser));
@@ -456,6 +543,8 @@ const server = http.createServer(async (req, res) => {
                         \${error.data?.error || 'Login failed. Please try again.'}
                     </div>
                 \`;
+            } finally {
+                form.classList.remove('loading');
             }
         }
 
@@ -465,7 +554,10 @@ const server = http.createServer(async (req, res) => {
             const formData = new FormData(form);
 
             try {
-                await api('/auth/signup', 'POST', {
+                form.classList.add('loading');
+                document.getElementById('signup-error').innerHTML = '';
+
+                const response = await api('/auth/signup', 'POST', {
                     email: formData.get('email'),
                     password: formData.get('password'),
                     role: formData.get('role')
@@ -484,6 +576,8 @@ const server = http.createServer(async (req, res) => {
                         \${error.data?.error || 'Signup failed. Please try again.'}
                     </div>
                 \`;
+            } finally {
+                form.classList.remove('loading');
             }
         }
 
@@ -495,30 +589,40 @@ const server = http.createServer(async (req, res) => {
         }
 
         // Initialize
-        if (currentUser) updateNav();
+        if (currentUser) {
+            updateNav();
+        }
     </script>
 </body>
 </html>`);
 });
 
 server.listen(port, '0.0.0.0', () => {
-    console.log(`✅ MIGRION Production Server ready`);
-    console.log(`📍 Frontend: http://localhost:${port}`);
-    console.log(`🔧 API Proxy: ${INTERNAL_API_URL}`);
+    console.log(`🚀 Migrion Frontend Server running on port ${port}`);
+    console.log(`📍 http://localhost:${port}`);
+    console.log(`🔧 API URL: ${API_URL}`);
+    console.log(`✅ Ready to accept connections`);
 });
 
+// Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('Received SIGTERM, shutting down gracefully');
-    server.close(() => process.exit(0));
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
 });
 
 process.on('SIGINT', () => {
     console.log('Received SIGINT, shutting down gracefully');
-    server.close(() => process.exit(0));
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
 });
 EOF
 
-# Install minimal dependencies
+# Install minimal dependencies for the server
 RUN npm init -y && npm install node-fetch@2.6.7
 
 # Change ownership
@@ -527,22 +631,18 @@ RUN chown -R nextjs:nodejs /app
 # Switch to non-root user
 USER nextjs
 
-# Environment variables
+# Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV PORT_API=4000
-ENV INTERNAL_API_URL=http://localhost:4000
-ENV NEXT_PUBLIC_API_URL=/api
+ENV HOSTNAME=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-# Expose ports
-EXPOSE 3000 4000
+# Expose port
+EXPOSE 3000
 
-# Start command - can run both API and Web if needed
-# For single-container deployment, use concurrently to run both services
-# For multi-container deployment, just run the web server
+# Start the bypass server
 CMD ["dumb-init", "node", "server.js"]
