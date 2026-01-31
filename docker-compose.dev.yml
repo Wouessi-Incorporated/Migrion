@@ -1,0 +1,166 @@
+version: "3.9"
+
+services:
+  # Database Services (Background)
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: migrion
+      POSTGRES_PASSWORD: migrion_pw
+      POSTGRES_DB: migrion
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    ports: ["5432:5432"]
+    volumes: ["migrion_pg_data:/var/lib/postgresql/data"]
+    networks: ["migrion_network"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U migrion -d migrion"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    networks: ["migrion_network"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 200mb --maxmemory-policy allkeys-lru
+
+  # API Service (Background)
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      - PORT=4000
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://migrion:migrion_pw@postgres:5432/migrion?schema=public
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=migrion-development-jwt-secret
+      - CORS_ORIGIN=http://localhost:3000,http://web:3000
+    ports: ["4000:4000"]
+    networks: ["migrion_network"]
+    volumes:
+      - ./apps/api/src:/app/apps/api/src:ro
+      - ./apps/api/prisma:/app/apps/api/prisma:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # Web Service (Frontend - Development Mode)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000
+    environment:
+      - INTERNAL_API_URL=http://api:4000
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+      - NODE_ENV=development
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - NEXT_TELEMETRY_DISABLED=1
+    ports: ["3000:3000"]
+    networks: ["migrion_network"]
+    volumes:
+      - ./apps/web/src:/app/apps/web/src:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Supporting Services (Background, Optional)
+  directus:
+    image: directus/directus:10.12.1
+    ports: ["8055:8055"]
+    environment:
+      KEY: "migrion-directus-dev-key"
+      SECRET: "migrion-directus-dev-secret"
+      ADMIN_EMAIL: "admin@migrion.local"
+      ADMIN_PASSWORD: "DevPassword123!"
+      DB_CLIENT: "pg"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_DATABASE: "migrion"
+      DB_USER: "migrion"
+      DB_PASSWORD: "migrion_pw"
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "http://localhost:3000,http://localhost:8055"
+      LOG_LEVEL: "info"
+      CACHE_ENABLED: "false"
+      PUBLIC_URL: "http://localhost:8055"
+    networks: ["migrion_network"]
+    volumes:
+      - migrion_directus_uploads:/directus/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n:1.57.0
+    environment:
+      N8N_HOST: "localhost"
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: "http"
+      WEBHOOK_URL: "http://localhost:5678/"
+      GENERIC_TIMEZONE: "UTC"
+      N8N_SECURE_COOKIE: "false"
+      N8N_LOG_LEVEL: "info"
+      N8N_METRICS: "true"
+      EXECUTIONS_TIMEOUT: "3600"
+    ports: ["5678:5678"]
+    networks: ["migrion_network"]
+    volumes:
+      - migrion_n8n_data:/home/node/.n8n
+    restart: unless-stopped
+
+  # Development/Admin Tools
+  adminer:
+    image: adminer:4.8.1
+    ports: ["8080:8080"]
+    environment:
+      ADMINER_DEFAULT_SERVER: "postgres"
+      ADMINER_DESIGN: "pepa-linha"
+    networks: ["migrion_network"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+# Persistent volumes
+volumes:
+  migrion_pg_data:
+    driver: local
+  migrion_n8n_data:
+    driver: local
+  migrion_directus_uploads:
+    driver: local
+
+# Custom network for service communication
+networks:
+  migrion_network:
+    name: migrion_dev_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

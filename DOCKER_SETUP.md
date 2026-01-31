@@ -11,9 +11,9 @@ This guide explains how to run Migrion with a **frontend-first** approach where 
 - At least 4GB of available RAM
 - Ports 3000, 4000, 5432, 6379, 8055, 5678, 8080 available
 
-### Frontend-First Startup (Recommended)
+### Quick Start Options
 
-Choose your platform:
+#### Option 1: Frontend-First Mode (Recommended for Production)
 
 **Windows (PowerShell):**
 ```powershell
@@ -29,6 +29,26 @@ chmod +x start-frontend-first.sh
 **Manual Docker Compose:**
 ```bash
 docker compose -f docker-start-frontend-first.yml up
+```
+
+#### Option 2: Development Mode (Bypasses Build Issues)
+
+If you're experiencing Next.js build errors, use development mode:
+
+**Windows (PowerShell):**
+```powershell
+.\start-dev-mode.ps1
+```
+
+**Linux/macOS (Bash):**
+```bash
+chmod +x start-dev-mode.sh
+./start-dev-mode.sh
+```
+
+**Manual Docker Compose:**
+```bash
+docker compose -f docker-compose.dev.yml up
 ```
 
 ## 📋 Service Overview
@@ -108,6 +128,7 @@ NODE_ENV=production
 
 ### Development Workflow
 
+#### Production Mode
 **Start everything:**
 ```bash
 ./start-frontend-first.sh
@@ -121,6 +142,22 @@ NODE_ENV=production
 **Clean start (removes volumes):**
 ```powershell
 .\start-frontend-first.ps1 -Clean
+```
+
+#### Development Mode (For Build Issues)
+**Start development mode:**
+```bash
+./start-dev-mode.sh
+```
+
+**Development with rebuild:**
+```powershell
+.\start-dev-mode.ps1 -Rebuild
+```
+
+**Clean development start:**
+```powershell
+.\start-dev-mode.ps1 -Clean
 ```
 
 **View logs:**
@@ -154,6 +191,35 @@ docker compose -f docker-start-frontend-first.yml exec postgres pg_dump -U migri
 ```bash
 docker compose -f docker-start-frontend-first.yml exec -T postgres psql -U migrion migrion < backup.sql
 ```
+
+## 🔍 Troubleshooting
+
+## 🛠️ Development Mode
+
+### When to Use Development Mode
+
+Use development mode if you encounter:
+- Next.js build errors (`TypeError: Cannot read properties of null (reading 'useContext')`)
+- HTML import errors (`<Html> should not be imported outside of pages/_document`)
+- Security vulnerabilities in Next.js versions
+- Any build-time failures
+
+### Development Mode Features
+
+- ✅ Bypasses Next.js build process
+- ✅ Simple fallback frontend
+- ✅ Fast Docker testing
+- ✅ All services in development mode
+- ✅ No hot reload (static serving)
+- ✅ Suitable for infrastructure testing
+
+### Development Mode Services
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Frontend (Dev)** | http://localhost:3000 | Simple fallback interface |
+| **API** | http://localhost:4000 | Full backend functionality |
+| **All other services** | Same ports | Full functionality |
 
 ## 🔍 Troubleshooting
 
@@ -198,12 +264,35 @@ docker volume rm migrion_migrion_pg_data
 ```
 
 **5. Web Service Build Failures**
+
+*If you encounter Next.js build errors, switch to development mode:*
+
+```bash
+# Use development mode instead
+./start-dev-mode.sh
+
+# Or manually with Docker Compose
+docker compose -f docker-compose.dev.yml up
+```
+
+*For production troubleshooting:*
 ```bash
 # Clear build cache
 docker builder prune -a
 
 # Rebuild specific service
 docker compose -f docker-start-frontend-first.yml build --no-cache web
+```
+
+**6. React Context or HTML Import Errors**
+
+*These are common Next.js SSR issues. Use development mode:*
+
+```bash
+# Switch to development mode
+./start-dev-mode.sh
+
+# The development version bypasses these build-time errors
 ```
 
 ### Health Checks
@@ -349,6 +438,7 @@ postgres:
 
 ### Common Commands Reference
 
+#### Production Mode Commands
 ```bash
 # Start services
 docker compose -f docker-start-frontend-first.yml up -d
@@ -367,6 +457,24 @@ docker compose -f docker-start-frontend-first.yml config
 
 # Pull latest images
 docker compose -f docker-start-frontend-first.yml pull
+```
+
+#### Development Mode Commands
+```bash
+# Start development services
+docker compose -f docker-compose.dev.yml up -d
+
+# Stop development services
+docker compose -f docker-compose.dev.yml down
+
+# Rebuild development services
+docker compose -f docker-compose.dev.yml up -d --build
+
+# View development logs
+docker compose -f docker-compose.dev.yml logs -f
+
+# Execute command in development container
+docker compose -f docker-compose.dev.yml exec api sh
 ```
 
 ---
